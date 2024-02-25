@@ -1,0 +1,27 @@
+# Ignore everything
+**/*.*
+/!build/*
+/!install/*
+**/__pycache__/**
+
+# But not these files...
+# 1. Include common files
+!/~scripts/*[.cmake]
+
+# 2. Project files
+!/Main/src/**/*[.c .h .cc .hh .inl .cpp .hpp .cxx .hxx .cppm .ixx]
+!/Main/tests/**/*.py
+!/Main/tests/**/*.cpp
+!/Main/CMakeLists.txt
+
+!/~vendor/include/*[.h, .hh, .inl, .hpp, .hxx, .ixx]
+!/~vendor/vcpkg.json
+!/CMake*.*
+!/.clang*
+
+# 0. Basic repo files
+!/[Readme|README|readme]*
+!/License*
+!/.git*
+
+!/.github/workflows/*.yml

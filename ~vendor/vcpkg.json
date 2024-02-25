@@ -1,0 +1,9 @@
+{
+    "version-string": "-",
+    "dependencies": [
+        "fmt",
+        "boost-test",
+        "boost-program-options",
+        "nlohmann-json"
+    ]
+}

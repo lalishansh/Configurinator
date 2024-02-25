@@ -1,0 +1,43 @@
+{
+	"version": 5,
+	"cmakeMinimumRequired": {
+		"major": 3,
+		"minor": 23,
+		"patch": 0
+	},
+	"include": [
+	],
+	"configurePresets": [
+		{
+			"name": "wsl-base-x64",
+			"hidden": true,
+			"inherits": [ "base", "desktop-x64" ],
+			"condition": {
+				"type": "equals",
+				"lhs": "${hostSystemName}",
+				"rhs": "Linux"
+			},
+			"vendor": {
+				"microsoft.com/VisualStudioSettings/CMake/1.0": { "hostOS": "Linux" }
+			}
+		},
+
+		{
+			"name": "WSL x64 - Ninja - Clang @ Release",
+			"inherits": [ "Linux-Environment", "wsl-base-x64", "ninja-clang", "release" ]
+		},
+		{
+			"name": "WSL x64 - Ninja - Clang @ Debug",
+			"inherits": [ "Linux-Environment", "wsl-base-x64", "ninja-clang", "debug" ]
+		},
+		{
+			"name": "WSL x64 - Ninja - GNU @ Release",
+			"inherits": [ "Linux-Environment", "wsl-base-x64", "ninja-mingw", "release" ]
+		},
+		{
+			"name": "WSL x64 - Ninja - GNU @ Debug",
+			"inherits": [ "Linux-Environment", "wsl-base-x64", "ninja-mingw", "debug" ]
+		}
+
+	]
+}
