@@ -1,11 +1,11 @@
-export module Configurinator.Model;
-
 #include <include.h>
 
-export import <string>;
-export import <vector>;
-export import <filesystem>;
-export import <unordered_map>;
+import <string>;
+import <vector>;
+import <filesystem>;
+#include <unordered_map>;
+
+export module Configurinator.Model;
 
 BEGIN_NAMESPACE
 

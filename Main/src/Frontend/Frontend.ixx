@@ -1,16 +1,15 @@
-export module Configurinator.Frontend;
-
-export import Configurinator.Model;
+import Configurinator.Model;
 
 export import <thread>;
 
 #include <include.h>
 
+export module Configurinator.Frontend;
+
 BEGIN_NAMESPACE
 
-	[[ nodiscard ]]
-export std::thread SpinFrontendProcess(Model& model);
-
+export [[ nodiscard ]]
+std::thread SpinFrontendProcess(Model& model);
 /*
 Run Frontend UI in new thread.
 1.  [ ] create 1 page UI with

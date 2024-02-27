@@ -1,15 +1,14 @@
-export module Configurinator.Backend;
-
-export import Configurinator.Model;
+import Configurinator.Model;
 
 export import <thread>;
 
 #include <include.h>
 
-BEGIN_NAMESPACE
+export module Configurinator.Backend;
 
-	[[ nodiscard ]]
-export std::thread SpinBackendProcess(Model& model);
+BEGIN_NAMESPACE
+export [[ nodiscard ]]
+std::thread SpinBackendProcess(Model& model);
 
 /*
 Run Backend in new thread.
