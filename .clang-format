@@ -162,8 +162,8 @@ JavaScriptWrapImports: true
 KeepEmptyLinesAtTheStartOfBlocks: false
 LambdaBodyIndentation: Signature
 
-MacroBlockBegin: 'BOOST_PP_BLOCK_BEGIN'
-MacroBlockEnd: 'BOOST_PP_BLOCK_END'
+MacroBlockBegin: 'BEGIN_NAMESPACE|BOOST_PP_BLOCK_BEGIN'
+MacroBlockEnd: 'END_NAMESPACE|BOOST_PP_BLOCK_END'
 MaxEmptyLinesToKeep: 2
 NamespaceIndentation: All
 

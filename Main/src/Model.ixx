@@ -3,6 +3,7 @@
 import <string>;
 import <vector>;
 import <filesystem>;
+#include <unordered_set>;
 #include <unordered_map>;
 
 export module Configurinator.Model;
@@ -48,11 +49,23 @@ struct Playlist
 	std::vector<NodeReference> Nodes;
 };
 
-struct DirectoryNode
+export struct DirectoryNode
 {
+	struct Hash {
+		usize operator()(const DirectoryNode &node) const {
+			return std::hash<decltype(node.Name)>()(node.Name);
+		}
+	};
+
+	b8 operator==(const DirectoryNode &oth) const {
+		return Name == oth.Name && ScriptNode == oth.ScriptNode && Children == oth.Children;
+	}
+
+	DirectoryNode(std::string_view name) : Name(name) {}
+
 	std::string Name;
-	std::vector<DirectoryNode> Children;
-	std::vector<std::string_view> Scripts;
+	std::vector<NodeDB::const_iterator> ScriptNode;
+	std::unordered_set<DirectoryNode, Hash> Children;
 };
 
 
@@ -77,9 +90,7 @@ export struct Model
 	struct
 	{
 		// TODO: Implement flattened tree structure with spans instead of vectors
-		DirectoryNode Root{
-			.Name = "All"
-		};
+		DirectoryNode Root { "All" };
 	} NodeTree;
 
 	std::vector<Playlist> ImportedPlaylists;
