@@ -81,9 +81,9 @@ BEGIN_NAMESPACE
 
     /*
     Parse Commandline argument [searchpaths(directories of .py files), playlistsfiles(json file), debugfile(raw txt), logfile(raw txt), pythonexec]
-    1. [ ] Parse and process program arguments
-    1. [ ] Write and run py file to search all 'searchpaths' for runnable script functions, and overwrite output in itself, parse the output to build 'NodeDB'
-    1. [ ] Build 'NodeTree' from 'NodeDB'
+    1. [x] Parse and process program arguments
+    1. [x] Write and run py file to search all 'searchpaths' for runnable script functions, and overwrite output in itself, parse the output to build 'NodeDB'
+    1. [x] Build 'NodeTree' from 'NodeDB'
     1. [ ] Parse 'playlistsfiles' to build 'ImportedPlaylists' (Level-1 type NodeTree, more like collection of lists) structures with nodes from NodeDB
     1. [ ] Create Read-Only file handle to 'debugfile' and 'logfile' to prevent deletion
     1. [ ] Load up settings file (if exists) to override settings
@@ -105,7 +105,7 @@ BEGIN_NAMESPACE
         if (fs::exists(desc.settingsfile) && fs::is_regular_file(desc.settingsfile)) {
             ParseSettings(desc.settingsfile, model_data.settings);
         }
-        return false;
+        return true;
     }
 
 #pragma region parse & process args
@@ -192,8 +192,34 @@ BEGIN_NAMESPACE
 #pragma endregion
 
 #pragma region parse node database
+    /* # EXAMPLE SCRIPT FILE TO PARSE:
+    import script_defines
+
+    @run_elevated
+    def ElevatedFunctionEvecuted():
+        print("ElevatedFunctionEvecuted")
+        return 0
+
+    @run_non_elevated
+    def NonElevatedFunctionEvecuted():
+        print("NonElevatedFunctionEvecuted")
+        return 0
+    */
+    /* // Dumped Output from SCRIPT FILE
+    {
+        "script": "/path/to/file.py": {
+            "FunctionName": {
+                "params": [
+                    { "name": "a", "type": "<class 'type'>", "default": "value" }
+                ]
+                "elevated": true
+                "return": "<class 'type'>"
+            }
+        }
+    }
+    */
     std::string_view PythonScript_ParseScriptFiles_To_SelfFile() {
-        return R"(# coding=utf-8
+    return R"(# coding=utf-8
 import sys, os
 
 output_file = sys.argv[0]
@@ -251,7 +277,9 @@ with open(output_file, "w") as file:
 
     void ParseNodeDatabase(const std::filesystem::path &intermidiatefile, const std::filesystem::path &pythonexec,
                            const std::span<std::filesystem::path> searchpaths,
-                           decltype(Configurinator::Model::NodeDB) &db) { {
+                           decltype(Configurinator::Model::NodeDB) &db)
+    {
+        {
             std::ofstream scriptfile(intermidiatefile);
             scriptfile << PythonScript_ParseScriptFiles_To_SelfFile();
             scriptfile.close();
@@ -270,8 +298,10 @@ with open(output_file, "w") as file:
             for (auto &&[key, value]: j.items()) {
                 db[std::move(key)].reserve(value.size());
                 for (auto &&[name, function]: value.items()) {
-                    db[key].emplace_back();
-                    auto &node = db[key].back();
+                    std::remove_cvref_t<decltype(db[key])>::value_type node;
+                    DEFER {
+                        db[key].emplace(std::move(node));
+                    };
 
                     node.Name = std::move(name);
                     node.Parameters.reserve(function["params"].size());
@@ -296,9 +326,9 @@ with open(output_file, "w") as file:
 
 #pragma region build node tree & playlists from parsed database
     void BuildNodeTree(const decltype(Configurinator::Model::NodeDB) &db,
-                       decltype(Configurinator::Model::NodeTree.Root) &node_tree) {
+                       decltype(Configurinator::Model::NodeTree.Root) &node_tree)
+    {
         // Build the node tree from db
-
         // TODO: we can speed this by using co-routine and not constructing a vector.
         // somthing like std::string_view get_next_split(str, delim, start, end)
         auto split = [](const std::string_view str, const char delim) -> std::vector<std::string_view> {
@@ -364,6 +394,40 @@ with open(output_file, "w") as file:
     void BuildPlaylist(const std::filesystem::path &playlistfile, const decltype(Configurinator::Model::NodeDB) &db,
                        decltype(Configurinator::Model::ImportedPlaylists)::iterator playlist) {
         // Build the playlist from db
+        using json = nlohmann::json;
+        std::ifstream file(playlistfile);
+        auto j = json::parse(file);
+        file.close();
+        /* // EXAMPLE PLAYLIST FILE TO PARSE
+        [
+            {
+                "script": "/path/to/file.py",
+                "function": "FunctionName",
+                "overrides": {
+                    "ParameterName": "value"
+                }
+            }
+        ]
+        */
+        for (auto &&node: j) {
+            auto &playlist_node = playlist->Nodes.emplace_back();
+            auto script_node = db.find(node["script"].get<std::string>());
+            if (script_node == db.end()) {
+                fmt::print(stderr, "Script node not found: {}\n", node["script"].get<std::string>());
+                continue;
+            }
+            auto function_node = script_node->second.find({node["function"].get<std::string>()});
+            if (function_node == script_node->second.end()) {
+                fmt::print(stderr, "Script node not found: {}\n", node["script"].get<std::string>());
+                continue;
+            }
+
+            playlist_node.Node = script_node;
+            playlist_node.Function = function_node;
+            for (auto &&[param, value]: node["overrides"].items()) {
+                playlist_node.ParameterOverrides.emplace_back(param, value.get<std::string>());
+            }
+        }
     }
 #pragma endregion
 
@@ -372,44 +436,5 @@ with open(output_file, "w") as file:
         // Parse the settings file and write to settings
     }
 #pragma endregion
-
-    /* // EXAMPLE PLAYLIST FILE TO PARSE
-    [
-        {
-            "script": "/path/to/file.py",
-            "function": "FunctionName",
-            "overrides": {
-                "ParameterName": "value"
-            }
-        }
-    ]
-    */
-    /* # EXAMPLE SCRIPT FILE TO PARSE:
-    import script_defines
-
-    @run_elevated
-    def ElevatedFunctionEvecuted():
-        print("ElevatedFunctionEvecuted")
-        return 0
-
-    @run_non_elevated
-    def NonElevatedFunctionEvecuted():
-        print("NonElevatedFunctionEvecuted")
-        return 0
-    */
-    /* // Dumped Output from SCRIPT FILE
-    {
-        "script": "/path/to/file.py": {
-            "FunctionName": {
-                "params": [
-                    { "name": "a", "type": "<class 'type'>", "default": "value" }
-                ]
-                "elevated": true
-                "return": "<class 'type'>"
-            }
-        }
-    }
-    */
-
 
 END_NAMESPACE

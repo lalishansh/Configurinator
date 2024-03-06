@@ -89,12 +89,12 @@ IF (NOT TARGET ftxui::screen)
         ADD_SUBDIRECTORY(${ftxui_SOURCE_DIR} ${ftxui_BINARY_DIR} EXCLUDE_FROM_ALL)
     ENDIF ()
 ENDIF ()
-#[[TARGET_LINK_LIBRARIES(${target_target}
+TARGET_LINK_LIBRARIES(${target_target}
                       PRIVATE
                       ftxui::screen
                       ftxui::dom
                       ftxui::component
-)]]
+)
 
 # tests target
 ADD_TESTS_FOR_TARGET(${target_target}

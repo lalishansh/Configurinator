@@ -32,14 +32,24 @@ struct FunctionNode
 	};
 	std::vector<Parameter> Parameters;
 	u64 RequiresElevation : 1;
+
+	struct Hash {
+		usize operator()(const FunctionNode &node) const {
+			return std::hash<decltype(node.Name)>()(node.Name);
+		}
+	};
+	b8 operator==(const FunctionNode &oth) const {
+		return Name == oth.Name && RequiresElevation == oth.RequiresElevation;
+	}
 };
 
-using NodeDB = std::unordered_map<std::string, std::vector<FunctionNode>>;
+using FunctionNodes = std::unordered_set<FunctionNode, FunctionNode::Hash>;
+using NodeDB = std::unordered_map<std::string, FunctionNodes>;
 
 struct NodeReference
 {
-	NodeDB::iterator Node;
-	std::string_view FunctionName;
+	NodeDB::const_iterator Node;
+	FunctionNodes::const_iterator Function;
 	std::vector<std::pair<std::string_view, std::string>> ParameterOverrides;
 };
 
